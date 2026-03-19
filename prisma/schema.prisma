@@ -1,0 +1,190 @@
+// ================================
+// Bourcha Room Booking - Prisma Schema
+// ================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ===== APP SETTINGS (branding éditable via admin) =====
+model AppSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+// ===== ROLES =====
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique // "admin" | "manager" | "user" | custom
+  label       String
+  isSystem    Boolean  @default(false) // true = locked (admin/manager/user)
+  permissions String   @default("[]") // JSON array of permission keys
+  color       String?  @default("#6366f1")
+  createdAt   DateTime @default(now())
+  users       User[]
+}
+
+// ===== USERS =====
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  name              String
+  firstName         String?
+  lastName          String?
+  password          String
+  roleId            String
+  role              Role      @relation(fields: [roleId], references: [id])
+  isActive          Boolean   @default(true)
+  avatar            String?
+  phone             String?
+  department        String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  bookings          Booking[]
+  managedRooms      RoomManager[]
+  validatedBookings Booking[] @relation("ValidatedBy")
+  passwordResets    PasswordResetToken[]
+  auditLogs         AuditLog[]
+  emailLogs         EmailLog[]
+}
+
+// ===== ROOMS =====
+model Room {
+  id              String   @id @default(cuid())
+  name            String   @unique
+  description     String?
+  capacity        Int
+  location        String?
+  floor           String?
+  building        String?
+  hasScreen       Boolean  @default(false)
+  hasCamera       Boolean  @default(false)
+  hasMicrophone   Boolean  @default(false)
+  hasVideoConf    Boolean  @default(false)
+  hasProjector    Boolean  @default(false)
+  hasWhiteboard   Boolean  @default(false)
+  hasTV           Boolean  @default(false)
+  otherFeatures   String?
+  requiresApproval Boolean @default(false)
+  isActive        Boolean  @default(true)
+  color           String?  @default("#6366f1")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  photos          RoomPhoto[]
+  bookings        Booking[]
+  managers        RoomManager[]
+}
+
+// ===== ROOM PHOTOS =====
+model RoomPhoto {
+  id        String   @id @default(cuid())
+  roomId    String
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  url       String
+  altText   String?
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// ===== ROOM MANAGERS =====
+model RoomManager {
+  id        String   @id @default(cuid())
+  roomId    String
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([roomId, userId])
+}
+
+// ===== BOOKINGS =====
+model Booking {
+  id                String        @id @default(cuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id])
+  roomId            String
+  room              Room          @relation(fields: [roomId], references: [id])
+  title             String
+  date              DateTime
+  startTime         String        // "09:00"
+  endTime           String        // "10:30"
+  isFullDay         Boolean       @default(false)
+  participants      Int           @default(1)
+  needsVideoConf    Boolean       @default(false)
+  needsCamera       Boolean       @default(false)
+  needsMicrophone   Boolean       @default(false)
+  needsScreen       Boolean       @default(false)
+  notes             String?
+  status            String        @default("PENDING") // PENDING | CONFIRMED | VALIDATED | REJECTED | CANCELLED
+  validatedById     String?
+  validatedBy       User?         @relation("ValidatedBy", fields: [validatedById], references: [id])
+  validatedAt       DateTime?
+  validationComment String?
+  cancelledAt       DateTime?
+  cancelReason      String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  statusHistory     BookingStatusHistory[]
+  emailLogs         EmailLog[]
+}
+
+// ===== BOOKING STATUS HISTORY =====
+model BookingStatusHistory {
+  id        String   @id @default(cuid())
+  bookingId String
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  status    String   // PENDING | CONFIRMED | VALIDATED | REJECTED | CANCELLED
+  comment   String?
+  changedBy String?
+  createdAt DateTime      @default(now())
+}
+
+// ===== EMAIL LOGS =====
+model EmailLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  bookingId  String?
+  booking    Booking? @relation(fields: [bookingId], references: [id])
+  type       String   // "CONFIRMED" | "PENDING" | "VALIDATED" | "REJECTED" | "CANCELLED" | "RESET_PASSWORD"
+  to         String
+  subject    String
+  status     String   @default("SENT") // "SENT" | "FAILED"
+  error      String?
+  sentAt     DateTime @default(now())
+}
+
+// ===== PASSWORD RESET =====
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+}
+
+// ===== AUDIT LOGS =====
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String   // "CREATE_BOOKING" | "CANCEL_BOOKING" | "LOGIN" | etc.
+  entity    String?  // "Booking" | "Room" | "User"
+  entityId  String?
+  details   String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+}

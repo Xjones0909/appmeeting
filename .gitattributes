@@ -1,0 +1,21 @@
+# Normalisation des fins de ligne pour Windows
+* text=auto eol=crlf
+
+# Fichiers texte → CRLF sur Windows
+*.js    text eol=crlf
+*.ts    text eol=crlf
+*.tsx   text eol=crlf
+*.jsx   text eol=crlf
+*.json  text eol=crlf
+*.md    text eol=crlf
+*.css   text eol=crlf
+*.html  text eol=crlf
+*.env   text eol=crlf
+
+# Fichiers binaires → pas de conversion
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.pdf   binary
