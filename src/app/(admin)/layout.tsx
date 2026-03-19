@@ -1,5 +1,4 @@
-import Sidebar from '@/components/layout/Sidebar'
-import TopBar from '@/components/layout/TopBar'
+import AppShell from '@/components/layout/AppShell'
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 
@@ -13,18 +12,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const userName  = (firstName && lastName)
     ? `${firstName} ${lastName}`
     : (session.user.name ?? 'Utilisateur')
-  const role      = user.role      as string ?? 'admin'
-  const roleLabel = user.roleLabel as string ?? role
+  const role      = (user.role      as string) ?? 'admin'
+  const roleLabel = (user.roleLabel as string) ?? role
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
-      <Sidebar role={role} />
-      <div className="flex-1 ml-64 flex flex-col min-h-screen">
-        <TopBar userName={userName} role={roleLabel} />
-        <main className="flex-1 p-6 overflow-auto">
-          {children}
-        </main>
-      </div>
-    </div>
+    <AppShell userName={userName} role={role} roleLabel={roleLabel}>
+      {children}
+    </AppShell>
   )
 }
