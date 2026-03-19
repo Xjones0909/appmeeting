@@ -8,7 +8,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     CredentialsProvider({
       name: 'credentials',
       credentials: {
-        email: { label: 'Email', type: 'email' },
+        email:    { label: 'Email',       type: 'email' },
         password: { label: 'Mot de passe', type: 'password' },
       },
       async authorize(credentials) {
@@ -25,16 +25,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           credentials.password as string,
           user.password
         )
-
         if (!passwordMatch) return null
 
         return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          firstName: user.firstName ?? '',
-          lastName: user.lastName ?? '',
-          role: user.role.name,
+          id:         user.id,
+          email:      user.email,
+          name:       user.name,
+          firstName:  user.firstName  ?? '',
+          lastName:   user.lastName   ?? '',
+          role:       user.role.name,
+          roleLabel:  user.role.label,
           department: user.department,
         }
       },
@@ -43,28 +43,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id
-        token.role = (user as any).role
+        token.id         = user.id
+        token.role       = (user as any).role
+        token.roleLabel  = (user as any).roleLabel
         token.department = (user as any).department
-        token.firstName = (user as any).firstName
-        token.lastName = (user as any).lastName
+        token.firstName  = (user as any).firstName
+        token.lastName   = (user as any).lastName
       }
       return token
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id as string
-        ;(session.user as any).role = token.role
-        ;(session.user as any).department = token.department
-        ;(session.user as any).firstName = token.firstName
-        ;(session.user as any).lastName = token.lastName
+        session.user.id                    = token.id as string
+        ;(session.user as any).role        = token.role
+        ;(session.user as any).roleLabel   = token.roleLabel
+        ;(session.user as any).department  = token.department
+        ;(session.user as any).firstName   = token.firstName
+        ;(session.user as any).lastName    = token.lastName
       }
       return session
     },
   },
   pages: {
     signIn: '/login',
-    error: '/login',
+    error:  '/login',
   },
   session: {
     strategy: 'jwt',

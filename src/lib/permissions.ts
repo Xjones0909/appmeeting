@@ -16,7 +16,7 @@ export const PERMISSIONS = [
   { key: 'profile.manage',     label: 'Gérer les profils et permissions',              category: 'Administration' },
   { key: 'settings.manage',    label: 'Modifier les paramètres application',           category: 'Administration' },
   // Rapports
-  { key: 'history.view_all',   label: 'Consulter l'historique global des réservations', category: 'Rapports' },
+  { key: 'history.view_all',   label: `Consulter l'historique global des réservations`, category: 'Rapports' },
 ] as const
 
 export type PermissionKey = typeof PERMISSIONS[number]['key']
