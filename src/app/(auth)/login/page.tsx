@@ -12,6 +12,7 @@ interface Branding {
   app_tagline: string
   company_name: string
   company_year: string
+  app_logo: string
 }
 
 const DEFAULT_BRANDING: Branding = {
@@ -20,22 +21,37 @@ const DEFAULT_BRANDING: Branding = {
   app_tagline: 'Réservez vos salles de réunion en quelques secondes. Simple, rapide et efficace.',
   company_name: 'BOURCHANIN & CIE',
   company_year: new Date().getFullYear().toString(),
+  app_logo: '',
+}
+
+function AppLogo({ logo, size = 'lg' }: { logo: string; size?: 'sm' | 'lg' }) {
+  const isLg = size === 'lg'
+  if (logo) {
+    return (
+      <img
+        src={logo}
+        alt="Logo"
+        className={isLg ? 'w-12 h-12 object-contain' : 'w-6 h-6 object-contain'}
+      />
+    )
+  }
+  return <Building2 className={isLg ? 'w-10 h-10 text-white' : 'w-5 h-5 text-white'} />
 }
 
 export default function LoginPage() {
   const router = useRouter()
   const [branding, setBranding] = useState<Branding>(DEFAULT_BRANDING)
   const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const [isLoading, setIsLoading]   = useState(false)
+  const [email, setEmail]           = useState('')
+  const [password, setPassword]     = useState('')
+  const [error, setError]           = useState('')
 
   useEffect(() => {
     fetch('/api/settings')
       .then(r => r.json())
       .then(data => {
-        if (data.app_name) setBranding(data)
+        if (data.app_name) setBranding({ ...DEFAULT_BRANDING, ...data })
       })
       .catch(() => {})
   }, [])
@@ -46,18 +62,12 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
-      })
-
+      const result = await signIn('credentials', { email, password, redirect: false })
       if (result?.error) {
         setError('Email ou mot de passe incorrect.')
         setIsLoading(false)
         return
       }
-
       router.push('/dashboard')
       router.refresh()
     } catch {
@@ -75,14 +85,12 @@ export default function LoginPage() {
         <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-accent-500/10 rounded-full -translate-x-1/2 -translate-y-1/2" />
 
         <div className="relative z-10 text-center">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-white/10 backdrop-blur rounded-3xl mb-8 ring-2 ring-white/20">
-            <Building2 className="w-10 h-10 text-white" />
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-white/10 backdrop-blur rounded-3xl mb-8 ring-2 ring-white/20 overflow-hidden">
+            <AppLogo logo={branding.app_logo} size="lg" />
           </div>
           <h1 className="text-4xl font-bold text-white mb-3">{branding.app_name}</h1>
           <p className="text-xl text-primary-200 font-medium mb-4">{branding.app_subtitle}</p>
-          <p className="text-primary-300 text-sm max-w-xs leading-relaxed">
-            {branding.app_tagline}
-          </p>
+          <p className="text-primary-300 text-sm max-w-xs leading-relaxed">{branding.app_tagline}</p>
         </div>
 
         <div className="absolute bottom-8 text-center">
@@ -95,8 +103,8 @@ export default function LoginPage() {
         <div className="w-full max-w-md animate-fade-in">
           {/* Logo mobile */}
           <div className="flex items-center gap-3 mb-10 lg:hidden">
-            <div className="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center overflow-hidden">
+              <AppLogo logo={branding.app_logo} size="sm" />
             </div>
             <div>
               <div className="font-bold text-slate-900">{branding.app_name} {branding.app_subtitle}</div>
@@ -123,15 +131,9 @@ export default function LoginPage() {
               <label className="label">Adresse email</label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="vous@bourcha.com"
-                  className="input pl-10"
-                  required
-                  autoComplete="email"
-                />
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                  placeholder="vous@bourcha.com" className="input pl-10"
+                  required autoComplete="email" />
               </div>
             </div>
 
@@ -144,31 +146,19 @@ export default function LoginPage() {
               </div>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="input pl-10 pr-11"
-                  required
-                  autoComplete="current-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                >
+                <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
+                  placeholder="••••••••" className="input pl-10 pr-11"
+                  required autoComplete="current-password" />
+                <button type="button" onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="remember"
-                className="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
-              />
+              <input type="checkbox" id="remember"
+                className="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500" />
               <label htmlFor="remember" className="text-sm text-slate-600">Rester connecté</label>
             </div>
 
